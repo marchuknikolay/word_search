@@ -3,10 +3,10 @@ import random
 import string
 
 
-def read_words_from_file(filename):
+def read_phrases_from_file(filename):
     with open(filename, "r") as f:
-        content = f.read()
-    return content.split()
+        content = f.read().splitlines()
+    return [phrase.replace(" ", "") for phrase in content if phrase.strip()]
 
 
 def generate_grid(rows, cols):
@@ -122,7 +122,7 @@ def save_grid_as_svg(grid, filename, word_positions=None, highlight_words=False)
 
 def main():
     if len(sys.argv) != 4:
-        print("Usage: python test_svg3.py <rows> <cols> <filename>")
+        print("Usage: python script.py <rows> <cols> <filename>")
         sys.exit(1)
 
     try:
@@ -133,7 +133,7 @@ def main():
         sys.exit(1)
 
     filename = sys.argv[3]  # Read filename from command line
-    words = read_words_from_file(filename)
+    words = read_phrases_from_file(filename)
 
     try:
         puzzle, word_positions = generate_word_search(words, rows, cols)
