@@ -9,18 +9,18 @@ def read_words_from_file(filename):
     return content.split()
 
 
-def generate_grid(size):
-    return [[' ' for _ in range(size)] for _ in range(size)]
+def generate_grid(rows, cols):
+    return [[' ' for _ in range(cols)] for _ in range(rows)]
 
 
 def can_place_word(grid, word, row, col, direction):
-    size = len(grid)
+    rows, cols = len(grid), len(grid[0])
     length = len(word)
     delta_row, delta_col = direction
     end_row = row + delta_row * (length - 1)
     end_col = col + delta_col * (length - 1)
 
-    if not (0 <= end_row < size and 0 <= end_col < size):
+    if not (0 <= end_row < rows and 0 <= end_col < cols):
         return False
 
     for i in range(length):
@@ -37,19 +37,19 @@ def place_word(grid, word, row, col, direction):
 
 
 def fill_empty_spaces(grid):
-    size = len(grid)
-    for r in range(size):
-        for c in range(size):
+    rows, cols = len(grid), len(grid[0])
+    for r in range(rows):
+        for c in range(cols):
             if grid[r][c] == ' ':
                 grid[r][c] = random.choice(string.ascii_uppercase)
 
 
-def generate_word_search(words, size=20, max_attempts=100, max_retries=100):
+def generate_word_search(words, rows=20, cols=20, max_attempts=100, max_retries=100):
     directions = [(1, 0), (0, 1), (1, 1), (-1, 1),
                   (1, -1), (-1, -1), (0, -1), (-1, 0)]
 
     for attempt in range(max_retries):
-        grid = generate_grid(size)
+        grid = generate_grid(rows, cols)
         word_positions = []
         unplaced_words = []
 
@@ -59,7 +59,7 @@ def generate_word_search(words, size=20, max_attempts=100, max_retries=100):
 
             while not placed and attempts < max_attempts:
                 row, col = random.randint(
-                    0, size - 1), random.randint(0, size - 1)
+                    0, rows - 1), random.randint(0, cols - 1)
                 direction = random.choice(directions)
 
                 if can_place_word(grid, word, row, col, direction):
@@ -81,14 +81,14 @@ def generate_word_search(words, size=20, max_attempts=100, max_retries=100):
 
 
 def save_grid_as_svg(grid, filename, word_positions=None, highlight_words=False):
-    size = len(grid)
+    rows, cols = len(grid), len(grid[0])
     cell_size = int(20 * 1.3)
     arrowhead_size = 6
     svg_content = ["<svg xmlns='http://www.w3.org/2000/svg' width='{}' height='{}'>".format(
-        size * cell_size, size * cell_size)]
+        cols * cell_size, rows * cell_size)]
 
-    for r in range(size):
-        for c in range(size):
+    for r in range(rows):
+        for c in range(cols):
             x, y = c * cell_size, r * cell_size
             svg_content.append(
                 "<rect x='{}' y='{}' width='{}' height='{}' stroke='black' fill='white' stroke-opacity='0'/>".format(x, y, cell_size, cell_size))
@@ -120,21 +120,22 @@ def save_grid_as_svg(grid, filename, word_positions=None, highlight_words=False)
 
 
 def main():
-    if len(sys.argv) != 3:
-        print("Usage: python test_svg3.py <grid_size> <filename>")
+    if len(sys.argv) != 4:
+        print("Usage: python test_svg3.py <rows> <cols> <filename>")
         sys.exit(1)
 
     try:
-        size = int(sys.argv[1])  # Read grid size from command line
+        rows = int(sys.argv[1])  # Read row size
+        cols = int(sys.argv[2])  # Read column size
     except ValueError:
-        print("Error: Grid size must be an integer.")
+        print("Error: Rows and columns must be integers.")
         sys.exit(1)
 
-    filename = sys.argv[2]  # Read filename from command line
+    filename = sys.argv[3]  # Read filename from command line
     words = read_words_from_file(filename)
 
     try:
-        puzzle, word_positions = generate_word_search(words, size)
+        puzzle, word_positions = generate_word_search(words, rows, cols)
         save_grid_as_svg(puzzle, "word_search.svg")
         save_grid_as_svg(puzzle, "word_search_answers.svg",
                          word_positions, highlight_words=True)
