@@ -1,6 +1,10 @@
 import sys
 import random
 import string
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from svglib.svglib import svg2rlg
+from reportlab.graphics import renderPDF
 
 
 def read_phrases_from_file(filename):
@@ -83,7 +87,7 @@ def generate_word_search(words, rows=20, cols=20, max_attempts=100, max_retries=
 def save_grid_as_svg(grid, filename, word_positions=None, highlight_words=False):
     rows = len(grid)
     cols = len(grid[0])
-    cell_size = int(20 * 1.3)
+    cell_size = int(17 * 1.3)
     arrowhead_size = 6
     svg_content = ["<svg xmlns='http://www.w3.org/2000/svg' width='{}' height='{}'>".format(
         cols * cell_size, rows * cell_size)]
@@ -120,6 +124,82 @@ def save_grid_as_svg(grid, filename, word_positions=None, highlight_words=False)
     print(f"SVG saved as {filename}")
 
 
+def save_svgs_to_pdf(svg_file1, svg_file2, output_pdf="word_search.pdf", scale_factor=1/1):
+    """
+    Creates a PDF with two SVG images centered and scaled.
+
+    :param svg_file1: First SVG file to include in the PDF
+    :param svg_file2: Second SVG file to include in the PDF
+    :param output_pdf: Output PDF filename
+    :param scale_factor: Scale factor for the SVG images
+    """
+    c = canvas.Canvas(output_pdf, pagesize=letter)
+    page_width, page_height = letter  # Get page dimensions
+
+    # Add title and description to the first page
+    c.setFont("Helvetica-Bold", 16)
+    c.drawCentredString(page_width / 2, page_height - 50, "Word Search Puzzle")
+    c.setFont("Helvetica", 12)
+    c.drawCentredString(page_width / 2, page_height - 70,
+                        "Solve the following puzzle by finding all the hidden words!")
+
+    def draw_svg(svg_file):
+        drawing = svg2rlg(svg_file)  # Load SVG
+
+        # Scale the drawing
+        drawing.width *= scale_factor
+        drawing.height *= scale_factor
+        drawing.scale(scale_factor, scale_factor)
+
+        # Calculate the centered position
+        x = (page_width - drawing.width) / 2
+        y = (page_height - drawing.height) / 1.5
+
+        # Draw the SVG centered and scaled
+        renderPDF.draw(drawing, c, x, y)
+
+    draw_svg(svg_file1)
+
+    # Add title for word list
+    c.setFont("Helvetica-Bold", 14)
+    c.drawCentredString(page_width / 2, 120, "Words List")
+
+    c.setFont("Helvetica", 11)
+    # Read words from words.txt and print them with wrapping
+    try:
+        with open("words.txt", "r") as f:
+            words = f.readlines()
+            words = [word.strip() for word in words]
+            max_width = page_width * 0.8
+            y_position = 100  # Adjusted to print after the puzzle
+            line = ""
+            for word in words:
+                if c.stringWidth(line + word, "Helvetica", 11) < max_width:
+                    line += (", " if line else "") + word
+                else:
+                    c.drawCentredString(page_width / 2, y_position, line)
+                    y_position -= 15
+                    line = word
+            if line:
+                c.drawCentredString(page_width / 2, y_position, line)
+    except FileNotFoundError:
+        c.drawCentredString(page_width / 2, 100, "(Word list not found)")
+
+    c.showPage()  # Move to the next page
+
+    # Add title and description to the second page
+    c.setFont("Helvetica-Bold", 16)
+    c.drawCentredString(page_width / 2, page_height - 50, "Solution")
+    c.setFont("Helvetica", 12)
+    c.drawCentredString(page_width / 2, page_height - 70,
+                        "Solve the following puzzle by finding all the hidden words!")
+
+    draw_svg(svg_file2)
+
+    # Save the PDF
+    c.save()
+
+
 def main():
     if len(sys.argv) != 4:
         print("Usage: python script.py <rows> <cols> <filename>")
@@ -141,6 +221,9 @@ def main():
         save_grid_as_svg(puzzle, "word_search_answers.svg",
                          word_positions, highlight_words=True)
         print("Puzzle successfully generated and saved as SVG.")
+
+        save_svgs_to_pdf("word_search.svg", "word_search_answers.svg")
+
     except ValueError as e:
         print(f"Error: {e}")
 
