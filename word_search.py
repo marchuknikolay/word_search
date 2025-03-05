@@ -10,7 +10,7 @@ from reportlab.graphics import renderPDF
 def read_phrases_from_file(filename):
     with open(filename, "r") as f:
         content = f.read().splitlines()
-    return [phrase.replace(" ", "") for phrase in content if phrase.strip()]
+    return sorted([phrase.replace(" ", "") for phrase in content if phrase.strip()], key=len, reverse=True)
 
 
 def generate_grid(rows, cols):
@@ -21,15 +21,10 @@ def can_place_word(grid, word, row, col, direction):
     rows, cols = len(grid), len(grid[0])
     length = len(word)
     delta_row, delta_col = direction
-    end_row = row + delta_row * (length - 1)
-    end_col = col + delta_col * (length - 1)
-
-    if not (0 <= end_row < rows and 0 <= end_col < cols):
-        return False
 
     for i in range(length):
         r, c = row + i * delta_row, col + i * delta_col
-        if grid[r][c] not in (' ', word[i]):
+        if not (0 <= r < rows and 0 <= c < cols) or (grid[r][c] not in (' ', word[i])):
             return False
     return True
 
@@ -52,6 +47,9 @@ def generate_word_search(words, rows=20, cols=20, max_attempts=100, max_retries=
     directions = [(1, 0), (0, 1), (1, 1), (-1, 1),
                   (1, -1), (-1, -1), (0, -1), (-1, 0)]
 
+    # Sort words by length (longer first)
+    words = sorted(words, key=len, reverse=True)
+
     for attempt in range(max_retries):
         grid = generate_grid(rows, cols)
         word_positions = []
@@ -60,6 +58,8 @@ def generate_word_search(words, rows=20, cols=20, max_attempts=100, max_retries=
         for word in words:
             placed = False
             attempts = 0
+            # Shuffle directions for better randomness
+            random.shuffle(directions)
 
             while not placed and attempts < max_attempts:
                 row, col = random.randint(
