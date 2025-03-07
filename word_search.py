@@ -85,7 +85,7 @@ def generate_word_search(words, rows=20, cols=20, max_attempts=100, max_retries=
         f"Could not place the following words after {max_retries} attempts: {', '.join(unplaced_words)}")
 
 
-def save_grid_as_svg(grid, filename, word_positions=None, highlight_words=False, padding=20, angle_precision=0):
+def save_grid_as_svg(grid, filename, word_positions=None, highlight_words=False, padding=20, angle_precision=0, rect_padding=-2):
     rows = len(grid)
     cols = len(grid[0])
     cell_size = int(17 * 1.3)  # Scale factor for better spacing
@@ -118,28 +118,30 @@ def save_grid_as_svg(grid, filename, word_positions=None, highlight_words=False,
             # Calculate rectangle center
             cx, cy = (x_start + x_end) / 2, (y_start + y_end) / 2
 
-            # Determine rectangle dimensions
+            # Determine rectangle dimensions and apply negative padding
             if dr == 0 and dc != 0:  # Horizontal (positive or negative dc)
-                width, height = word_length * cell_size, cell_size
+                width, height = word_length * cell_size + \
+                    rect_padding, cell_size + rect_padding
                 angle = 0
             elif dr != 0 and dc == 0:  # Vertical (positive or negative dr)
-                width, height = cell_size, word_length * cell_size
+                width, height = cell_size + rect_padding, word_length * cell_size + rect_padding
                 angle = 0
             else:  # Diagonal (45° or -45°)
-                width = word_length * cell_size * math.sqrt(2)  # Scale width
-                height = cell_size
-                angle = math.degrees(math.atan2(dr, dc))
+                # Scale width for diagonal and apply negative padding
+                width = word_length * cell_size * 1.414 + rect_padding
+                height = cell_size + rect_padding
+                angle = 45 if dr > 0 else -45  # Assuming diagonal words are either 45° or -45°
 
             # Round the angle to the specified precision
             angle = round(angle, angle_precision)
 
-            rx = cell_size * 0.5  # 50% of cell size for more pronounced rounding
-            ry = cell_size * 0.5  # 50% of cell size for more pronounced rounding
+            rx = cell_size * 0.5  # 50% of cell size for rounded corners
+            ry = cell_size * 0.5  # 50% of cell size for rounded corners
 
             # Create rotated rectangle for diagonal words with rounded corners
             svg_content.append(
                 "<g transform='rotate({}, {}, {})'>"
-                "<rect x='{}' y='{}' width='{}' height='{}' stroke='blue' fill='none' stroke-width='0.7' rx='{}' ry='{}'/>"
+                "<rect x='{}' y='{}' width='{}' height='{}' stroke='black' fill='none' stroke-width='0.7' rx='{}' ry='{}'/>"
                 "</g>".format(angle, cx, cy, cx - width / 2,
                               cy - height / 2, width, height, rx, ry)
             )
