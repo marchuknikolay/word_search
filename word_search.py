@@ -85,32 +85,35 @@ def generate_word_search(words, rows=20, cols=20, max_attempts=100, max_retries=
         f"Could not place the following words after {max_retries} attempts: {', '.join(unplaced_words)}")
 
 
-def save_grid_as_svg(grid, filename, word_positions=None, highlight_words=False):
+def save_grid_as_svg(grid, filename, word_positions=None, highlight_words=False, padding=20):
     rows = len(grid)
     cols = len(grid[0])
     cell_size = int(17 * 1.3)  # Scale factor for better spacing
-    svg_content = ["<svg xmlns='http://www.w3.org/2000/svg' width='{}' height='{}'>".format(
-        cols * cell_size, rows * cell_size)]
+    svg_width = cols * cell_size + 2 * padding
+    svg_height = rows * cell_size + 2 * padding
 
-    # Draw grid and letters
+    svg_content = [
+        "<svg xmlns='http://www.w3.org/2000/svg' width='{}' height='{}'>".format(svg_width, svg_height)]
+
+    # Draw grid and letters with padding applied
     for r in range(rows):
         for c in range(cols):
-            x, y = c * cell_size, r * cell_size
+            x, y = c * cell_size + padding, r * cell_size + padding
             svg_content.append(
                 "<rect x='{}' y='{}' width='{}' height='{}' stroke='black' fill='white' stroke-opacity='0'/>".format(x, y, cell_size, cell_size))
             svg_content.append("<text x='{}' y='{}' font-size='15' text-anchor='middle' fill='black' font-family='Arial'>{}</text>".format(
                 x + cell_size // 2, y + cell_size // 2 + 5, grid[r][c]))
 
-    # Highlight words using ellipses
+    # Highlight words using ellipses with padding applied
     if highlight_words and word_positions:
         for word, row, col, (dr, dc) in word_positions:
             word_length = len(word)
-            x_start = col * cell_size + cell_size // 2
-            y_start = row * cell_size + cell_size // 2
+            x_start = col * cell_size + cell_size // 2 + padding
+            y_start = row * cell_size + cell_size // 2 + padding
             x_end = (col + (word_length - 1) * dc) * \
-                cell_size + cell_size // 2
+                cell_size + cell_size // 2 + padding
             y_end = (row + (word_length - 1) * dr) * \
-                cell_size + cell_size // 2
+                cell_size + cell_size // 2 + padding
 
             # Calculate ellipse center
             cx, cy = (x_start + x_end) / 2, (y_start + y_end) / 2
@@ -126,7 +129,6 @@ def save_grid_as_svg(grid, filename, word_positions=None, highlight_words=False)
                 distance = math.sqrt((word_length - 1) **
                                      2 * (cell_size ** 2 + cell_size ** 2))
                 rx, ry = distance / 2, cell_size / 3
-                # Calculate rotation angle
                 angle = math.degrees(math.atan2(dr, dc))
 
             # Create rotated ellipse for diagonal words
