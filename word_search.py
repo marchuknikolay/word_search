@@ -104,6 +104,29 @@ def save_grid_as_svg(grid, filename, word_positions=None, highlight_words=False,
             svg_content.append("<text x='{}' y='{}' font-size='15' text-anchor='middle' fill='black' font-family='Arial'>{}</text>".format(
                 x + cell_size // 2, y + cell_size // 2 + 5, grid[r][c]))
 
+    # Increase the padding between table and thinner rectangle
+    extra_padding = 8  # Adjust this value to increase/decrease the padding
+
+    # Adjust the grid's x, y, width, and height with extra padding
+    grid_x = padding - 10 - extra_padding
+    grid_y = padding - 10 - extra_padding
+    grid_width = svg_width - 2 * padding + 20 + 2 * extra_padding
+    grid_height = svg_height - 2 * padding + 20 + 2 * extra_padding
+    rx = 20  # Radius for rounded corners
+    ry = 20  # Radius for rounded corners
+
+    # Add the thicker rectangle (outer layer) to the SVG content
+    svg_content.append(
+        "<rect x='{}' y='{}' width='{}' height='{}' stroke='black' fill='none' stroke-width='3' rx='{}' ry='{}'/>".format(
+            grid_x, grid_y, grid_width, grid_height, rx, ry)
+    )
+
+    # Add the thinner rectangle (inner layer) to the SVG content
+    svg_content.append(
+        "<rect x='{}' y='{}' width='{}' height='{}' stroke='black' fill='none' stroke-width='1' rx='{}' ry='{}'/>".format(
+            grid_x + 5, grid_y + 5, grid_width - 10, grid_height - 10, rx, ry)
+    )
+
     # Highlight words using rotated rectangles
     if highlight_words and word_positions:
         for word, row, col, (dr, dc) in word_positions:
