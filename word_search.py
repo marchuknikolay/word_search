@@ -1,3 +1,4 @@
+import math
 import sys
 import random
 import string
@@ -87,11 +88,11 @@ def generate_word_search(words, rows=20, cols=20, max_attempts=100, max_retries=
 def save_grid_as_svg(grid, filename, word_positions=None, highlight_words=False):
     rows = len(grid)
     cols = len(grid[0])
-    cell_size = int(17 * 1.3)
-    arrowhead_size = 6
+    cell_size = int(17 * 1.3)  # Scale factor for better spacing
     svg_content = ["<svg xmlns='http://www.w3.org/2000/svg' width='{}' height='{}'>".format(
         cols * cell_size, rows * cell_size)]
 
+    # Draw grid and letters
     for r in range(rows):
         for c in range(cols):
             x, y = c * cell_size, r * cell_size
@@ -100,23 +101,40 @@ def save_grid_as_svg(grid, filename, word_positions=None, highlight_words=False)
             svg_content.append("<text x='{}' y='{}' font-size='15' text-anchor='middle' fill='black' font-family='Arial'>{}</text>".format(
                 x + cell_size // 2, y + cell_size // 2 + 5, grid[r][c]))
 
+    # Highlight words using ellipses
     if highlight_words and word_positions:
-        svg_content.append("""
-        <defs>
-            <marker id='arrowhead' markerWidth='6' markerHeight='6' refX='5' refY='3' orient='auto' markerUnits='strokeWidth'>
-                <path d='M0,0 L6,3 L0,6 L2,3 Z' fill='red'/>
-            </marker>
-        </defs>
-        """)
-
         for word, row, col, (dr, dc) in word_positions:
+            word_length = len(word)
             x_start = col * cell_size + cell_size // 2
             y_start = row * cell_size + cell_size // 2
-            x_end = (col + (len(word) - 1) * dc) * cell_size + cell_size // 2
-            y_end = (row + (len(word) - 1) * dr) * cell_size + cell_size // 2
+            x_end = (col + (word_length - 1) * dc) * \
+                cell_size + cell_size // 2
+            y_end = (row + (word_length - 1) * dr) * \
+                cell_size + cell_size // 2
 
+            # Calculate ellipse center
+            cx, cy = (x_start + x_end) / 2, (y_start + y_end) / 2
+
+            # Determine ellipse dimensions
+            if dr == 0 and dc == 1:  # Horizontal
+                rx, ry = (word_length * cell_size) / 2, cell_size / 3
+                angle = 0
+            elif dr == 1 and dc == 0:  # Vertical
+                rx, ry = cell_size / 3, (word_length * cell_size) / 2
+                angle = 0
+            else:  # Diagonal (45° or -45°)
+                distance = math.sqrt((word_length - 1) **
+                                     2 * (cell_size ** 2 + cell_size ** 2))
+                rx, ry = distance / 2, cell_size / 3
+                # Calculate rotation angle
+                angle = math.degrees(math.atan2(dr, dc))
+
+            # Create rotated ellipse for diagonal words
             svg_content.append(
-                "<line x1='{}' y1='{}' x2='{}' y2='{}' stroke='red' stroke-width='1' marker-end='url(#arrowhead)'/>".format(x_start, y_start, x_end, y_end))
+                "<g transform='rotate({}, {}, {})'>"
+                "<ellipse cx='{}' cy='{}' rx='{}' ry='{}' stroke='blue' fill='none' stroke-width='1'/>"
+                "</g>".format(angle, cx, cy, cx, cy, rx, ry)
+            )
 
     svg_content.append("</svg>")
     with open(filename, "w") as f:
