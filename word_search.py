@@ -119,14 +119,14 @@ def save_grid_as_svg(grid, filename, word_positions=None, highlight_words=False,
             cx, cy = (x_start + x_end) / 2, (y_start + y_end) / 2
 
             # Determine rectangle dimensions
-            if dr == 0 and dc == 1:  # Horizontal
+            if dr == 0 and dc != 0:  # Horizontal (positive or negative dc)
                 width, height = word_length * cell_size, cell_size
                 angle = 0
-            elif dr == 1 and dc == 0:  # Vertical
+            elif dr != 0 and dc == 0:  # Vertical (positive or negative dr)
                 width, height = cell_size, word_length * cell_size
                 angle = 0
             else:  # Diagonal (45° or -45°)
-                width = word_length * cell_size
+                width = word_length * cell_size * math.sqrt(2)  # Scale width
                 height = cell_size
                 angle = math.degrees(math.atan2(dr, dc))
 
@@ -139,7 +139,7 @@ def save_grid_as_svg(grid, filename, word_positions=None, highlight_words=False,
             # Create rotated rectangle for diagonal words with rounded corners
             svg_content.append(
                 "<g transform='rotate({}, {}, {})'>"
-                "<rect x='{}' y='{}' width='{}' height='{}' stroke='blue' fill='none' stroke-width='1' rx='{}' ry='{}'/>"
+                "<rect x='{}' y='{}' width='{}' height='{}' stroke='blue' fill='none' stroke-width='0.7' rx='{}' ry='{}'/>"
                 "</g>".format(angle, cx, cy, cx - width / 2,
                               cy - height / 2, width, height, rx, ry)
             )
