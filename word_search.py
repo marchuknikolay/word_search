@@ -100,7 +100,7 @@ def save_grid_as_svg(grid, filename, word_positions=None, highlight_words=False,
         for c in range(cols):
             x, y = c * cell_size + padding, r * cell_size + padding
             svg_content.append(
-                "<rect x='{}' y='{}' width='{}' height='{}' stroke='black' fill='white' stroke-opacity='0'/>".format(x, y, cell_size, cell_size))
+                "<rect x='{}' y='{}' width='{}' height='{}' stroke='black' fill='white' stroke-opacity='0' rx='5' ry='5'/>".format(x, y, cell_size, cell_size))
             svg_content.append("<text x='{}' y='{}' font-size='15' text-anchor='middle' fill='black' font-family='Arial'>{}</text>".format(
                 x + cell_size // 2, y + cell_size // 2 + 5, grid[r][c]))
 
@@ -133,12 +133,15 @@ def save_grid_as_svg(grid, filename, word_positions=None, highlight_words=False,
             # Round the angle to the specified precision
             angle = round(angle, angle_precision)
 
-            # Create rotated rectangle for diagonal words
+            rx = cell_size * 0.5  # 50% of cell size for more pronounced rounding
+            ry = cell_size * 0.5  # 50% of cell size for more pronounced rounding
+
+            # Create rotated rectangle for diagonal words with rounded corners
             svg_content.append(
                 "<g transform='rotate({}, {}, {})'>"
-                "<rect x='{}' y='{}' width='{}' height='{}' stroke='blue' fill='none' stroke-width='1'/>"
+                "<rect x='{}' y='{}' width='{}' height='{}' stroke='blue' fill='none' stroke-width='1' rx='{}' ry='{}'/>"
                 "</g>".format(angle, cx, cy, cx - width / 2,
-                              cy - height / 2, width, height)
+                              cy - height / 2, width, height, rx, ry)
             )
 
     svg_content.append("</svg>")
