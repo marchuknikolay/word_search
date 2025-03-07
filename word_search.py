@@ -85,7 +85,7 @@ def generate_word_search(words, rows=20, cols=20, max_attempts=100, max_retries=
         f"Could not place the following words after {max_retries} attempts: {', '.join(unplaced_words)}")
 
 
-def save_grid_as_svg(grid, filename, word_positions=None, highlight_words=False, padding=20):
+def save_grid_as_svg(grid, filename, word_positions=None, highlight_words=False, padding=20, angle_precision=0):
     rows = len(grid)
     cols = len(grid[0])
     cell_size = int(17 * 1.3)  # Scale factor for better spacing
@@ -104,7 +104,7 @@ def save_grid_as_svg(grid, filename, word_positions=None, highlight_words=False,
             svg_content.append("<text x='{}' y='{}' font-size='15' text-anchor='middle' fill='black' font-family='Arial'>{}</text>".format(
                 x + cell_size // 2, y + cell_size // 2 + 5, grid[r][c]))
 
-    # Highlight words using ellipses with padding applied
+    # Highlight words using rotated rectangles
     if highlight_words and word_positions:
         for word, row, col, (dr, dc) in word_positions:
             word_length = len(word)
@@ -115,27 +115,30 @@ def save_grid_as_svg(grid, filename, word_positions=None, highlight_words=False,
             y_end = (row + (word_length - 1) * dr) * \
                 cell_size + cell_size // 2 + padding
 
-            # Calculate ellipse center
+            # Calculate rectangle center
             cx, cy = (x_start + x_end) / 2, (y_start + y_end) / 2
 
-            # Determine ellipse dimensions
+            # Determine rectangle dimensions
             if dr == 0 and dc == 1:  # Horizontal
-                rx, ry = (word_length * cell_size) / 2, cell_size / 3
+                width, height = word_length * cell_size, cell_size
                 angle = 0
             elif dr == 1 and dc == 0:  # Vertical
-                rx, ry = cell_size / 3, (word_length * cell_size) / 2
+                width, height = cell_size, word_length * cell_size
                 angle = 0
             else:  # Diagonal (45° or -45°)
-                distance = math.sqrt((word_length - 1) **
-                                     2 * (cell_size ** 2 + cell_size ** 2))
-                rx, ry = distance / 2, cell_size / 3
+                width = word_length * cell_size
+                height = cell_size
                 angle = math.degrees(math.atan2(dr, dc))
 
-            # Create rotated ellipse for diagonal words
+            # Round the angle to the specified precision
+            angle = round(angle, angle_precision)
+
+            # Create rotated rectangle for diagonal words
             svg_content.append(
                 "<g transform='rotate({}, {}, {})'>"
-                "<ellipse cx='{}' cy='{}' rx='{}' ry='{}' stroke='blue' fill='none' stroke-width='1'/>"
-                "</g>".format(angle, cx, cy, cx, cy, rx, ry)
+                "<rect x='{}' y='{}' width='{}' height='{}' stroke='blue' fill='none' stroke-width='1'/>"
+                "</g>".format(angle, cx, cy, cx - width / 2,
+                              cy - height / 2, width, height)
             )
 
     svg_content.append("</svg>")
